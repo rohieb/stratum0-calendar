@@ -129,10 +129,16 @@ class DatePrinter(object):
 		if self.end_date <= self.start_date:
 			raise InvalidDateEntryException
 
+	def getTags(self):
+		# currently only two disjunct tags, so it's a bit simpler
+		external = "[extern] " if self.category.startswith("Extern") else ""
+		private = "[privat] " if self.category.startswith("privat") else ""
+		return external + private
+
 	def getIcal(self):
 		event = ical.Event()
 		event.add('uid', hashlib.md5(self.name.encode("utf8") + str(self.start_date).encode("utf8")).hexdigest() + "@stratum0.org")
-		event.add('summary', self.getPlainName().encode("utf8"))
+		event.add('summary', (self.getTags() + self.getPlainName()).encode("utf8"))
 		url = self.getURL()
 		if url:
 			event.add('url', url.encode("utf8"))
@@ -143,7 +149,7 @@ class DatePrinter(object):
 	def getJson(self):
 		result = {}
 		result["id"] = hashlib.md5(self.getPlainName().encode("utf8")).hexdigest()
-		result["title"] = self.getDetailPlain()
+		result["title"] = self.getTags() + self.getDetailPlain()
 		result["url"] = self.getURL()
 		result["class"] = "event-%s" % simple_name(self.category)
 		result["start"] = int(time.mktime(self.start_date.timetuple()) * 1000)
